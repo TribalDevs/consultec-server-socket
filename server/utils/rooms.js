@@ -30,6 +30,5 @@ module.exports = {
   createRoom,
   getRoom,
   getRooms,
-  updateRoomStatus,
   deleteRoom,
 };
