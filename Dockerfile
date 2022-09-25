@@ -1,6 +1,6 @@
 FROM node:16.14.2-bullseye-slim AS base
 
-LABEL Name=lifeline-socket Version=1.0.0
+LABEL Name=consultec-socket Version=1.0.0
 EXPOSE 5050
 ENV DEBIAN_FRONTEND=noninteractive
 
