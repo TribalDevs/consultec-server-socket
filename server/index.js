@@ -30,6 +30,14 @@ app.use(
 );
 io.on("connection", (socket) => {
   // connection log
-  console.log("New client connected");
+  console.log("New client connected to consultec server", socket.id);
+  // disconnect log
+  socket.on("disconnect", () => {
+    console.log("Client disconnected from consultec server", socket.id);
+  });
+  // trigger when user join
+  socket.on("join", async (data) => {
+    console.log("join", data);
+  });
 });
 export default server;
