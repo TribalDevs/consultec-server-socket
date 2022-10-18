@@ -1,7 +1,7 @@
 import { isEmpty } from "./nativeMethods";
 const { getCache, setCache, getKeys, delCache } = require("./redis");
 async function joinUser({ id, username, socketId, location }) {
-  const user = { id, username, socketId, location };
+  const user = { id, username, socketId, location, status: "online" };
   await setCache(`user-${socketId}`, user);
   return user;
 }
@@ -19,6 +19,13 @@ async function getUsers() {
     }
   }
   return usersData;
+}
+async function setUserStatus({ id, status }) {
+  const user = await getUser(id);
+  if (user) {
+    user.status = status;
+    await setCache(`user-${id}`, user);
+  }
 }
 async function deleteUser(id) {
   await delCache(`user-${id}`);
