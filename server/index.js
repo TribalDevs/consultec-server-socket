@@ -8,7 +8,7 @@ import {
   setUserStatus,
   deleteUser,
   checkUserStatus,
-  requestUsersStatus
+  requestUsersStatus,
 } from "./utils/users";
 
 const app = express();
@@ -41,7 +41,11 @@ io.on("connection", (socket) => {
   // disconnect log
   socket.on("disconnect", () => {
     console.log("Client disconnected from consultec server", socket.id);
-    deleteUser(socket.id);
+    deleteUser(socket.id).then(async (id) => {
+      if (id) {
+        io.emit("userHasDisconnected", id);
+      }
+    });
   });
   // trigger when user join
   socket.on("join", async (data) => {
@@ -50,6 +54,8 @@ io.on("connection", (socket) => {
       socketId: socket.id,
     }).then(async (user) => {
       socket.emit("successJoin", user);
+      // broadcast to all users
+      socket.broadcast.emit("userHasConnected", user);
     });
   });
   socket.on("startNewConversation", ({ initiator, receiver }) => {});
@@ -64,10 +70,10 @@ io.on("connection", (socket) => {
       senderSocketId: socket.id,
     });
   });
-  socket.on("requestUsersStatus", async (data)=> {
+  socket.on("requestUsersStatus", async (data) => {
     requestUsersStatus(data).then((users) => {
       socket.emit("sendUsersStatus", users);
     });
-  })
+  });
 });
 export default server;
