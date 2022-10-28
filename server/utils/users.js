@@ -1,7 +1,13 @@
 import { isEmpty } from "./nativeMethods";
 const { getCache, setCache, getKeys, delCache } = require("./redis");
-async function joinUser({ id, username, socketId, location }) {
-  const user = { id, username, socketId, location, status: "online" };
+async function joinUser({ id, username, socketId, ...rest }) {
+  const user = {
+    ...rest,
+    id,
+    username,
+    socketId,
+    status: "online",
+  };
   await setCache(`user-${socketId}`, user);
   return user;
 }
@@ -28,7 +34,71 @@ async function setUserStatus({ id, status }) {
   }
 }
 async function deleteUser(id) {
-  await delCache(`user-${id}`);
+  const users = await getKeys("user-*");
+  if (users) {
+    let userId = "";
+    // check if there is a user with the same socket id
+    for (let i = 0; i < users.length; i++) {
+      const user = await getCache(users[i]);
+      if (user) {
+        if (user.socketId === id) {
+          await delCache(users[i]);
+          userId = user.id;
+          break;
+        }
+      }
+    }
+    // check if there is a user with the same id
+    for (let i = 0; i < users.length; i++) {
+      const user = await getCache(users[i]);
+      if (user) {
+        if (user.id === userId) {
+          await delCache(users[i]);
+        }
+      }
+    }
+  }
+}
+async function checkUserStatus(id) {
+  // get all users
+  const users = await getKeys("user-*");
+  let userStatus = "offline";
+  let userSocketId = "";
+  if (users) {
+    for (let i = 0; i < users.length; i++) {
+      const user = await getCache(users[i]);
+      if (user.id === id) {
+        userStatus = user.status;
+        userSocketId = user.socketId;
+        break;
+      }
+    }
+  }
+  return {
+    status: userStatus,
+    socketId: userSocketId,
+  };
+}
+async function requestUsersStatus(data) {
+  const users = await getKeys("user-*");
+  const usersData = [];
+
+  if (users) {
+    for (let i = 0; i < users.length; i++) {
+      const user = await getCache(users[i]);
+      usersData.push({
+        id: user.id,
+        socketId: user.socketId,
+        status: user.status,
+        role: user.role,
+      });
+    }
+  }
+  // filter users
+  const usersFiltered = usersData.filter((user) => {
+    return data.includes(user.id);
+  });
+  return usersFiltered;
 }
 
 module.exports = {
@@ -36,4 +106,7 @@ module.exports = {
   getUser,
   getUsers,
   deleteUser,
+  setUserStatus,
+  checkUserStatus,
+  requestUsersStatus,
 };
