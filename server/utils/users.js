@@ -57,6 +57,7 @@ async function deleteUser(id) {
         }
       }
     }
+    return userId;
   }
 }
 async function checkUserStatus(id) {
