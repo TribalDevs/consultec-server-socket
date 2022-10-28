@@ -65,6 +65,7 @@ io.on("connection", (socket) => {
     });
   });
   socket.on("sendMessage", async (data) => {
+    console.log("sendMessage", data);
     io.to(data.receiver.socketId).emit("receiveMessage", {
       ...data,
       senderSocketId: socket.id,
