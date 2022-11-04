@@ -1,14 +1,14 @@
+import cors from "cors";
 import express from "express";
 import http from "http";
-import cors from "cors";
-import { REDIS } from "../config/config";
 import { createClient } from "redis";
+import { REDIS } from "../config/config";
 import {
-  joinUser,
-  setUserStatus,
-  deleteUser,
   checkUserStatus,
+  deleteUser,
+  joinUser,
   requestUsersStatus,
+  setUserStatus
 } from "./utils/users";
 
 const app = express();
@@ -49,14 +49,16 @@ io.on("connection", (socket) => {
   });
   // trigger when user join
   socket.on("join", async (data) => {
-    joinUser({
-      ...data,
-      socketId: socket.id,
-    }).then(async (user) => {
-      socket.emit("successJoin", user);
-      // broadcast to all users
-      socket.broadcast.emit("userHasConnected", user);
-    });
+    if (data) {
+      joinUser({
+        ...data,
+        socketId: socket.id,
+      }).then(async (user) => {
+        socket.emit("successJoin", user);
+        // broadcast to all users
+        socket.broadcast.emit("userHasConnected", user);
+      });
+    }
   });
   socket.on("startNewConversation", ({ initiator, receiver }) => {});
   socket.on("checkUserStatus", async (id) => {
@@ -75,6 +77,23 @@ io.on("connection", (socket) => {
     requestUsersStatus(data).then((users) => {
       socket.emit("sendUsersStatus", users);
     });
+  });
+  socket.on("callUser", (data) => {
+    io.to(data.userToCall).emit("callUser", {
+      signal: data.signalData,
+      from: data.from,
+      name: data.name,
+    });
+  });
+  socket.on("answerCall", (data) => {
+    io.to(data.to).emit("callAccepted", data.signal);
+  });
+  socket.on("rejectCall", (data) => {
+    io.to(data.to).emit("rejectedCall");
+  });
+  socket.on("endCall", (data) => {
+    console.log("endCall", data);
+    io.to(data.to).emit("endedCall");
   });
 });
 export default server;
