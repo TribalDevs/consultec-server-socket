@@ -87,12 +87,14 @@ async function requestUsersStatus(data) {
   if (users) {
     for (let i = 0; i < users.length; i++) {
       const user = await getCache(users[i]);
-      usersData.push({
-        id: user.id,
-        socketId: user.socketId,
-        status: user.status,
-        role: user.role,
-      });
+      if (user) {
+        usersData.push({
+          id: user.id,
+          socketId: user.socketId,
+          status: user.status,
+          role: user.role,
+        });
+      }
     }
   }
   // filter users
